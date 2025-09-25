@@ -55,7 +55,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true,
+  // credentials: true,
 }));
 
 app.use(express.json());
