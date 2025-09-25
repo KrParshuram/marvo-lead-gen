@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign Dashboard</title>
+<style>
+:root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+body { margin: 24px; background:#f7f7fb; color:#111827; }
+h1,h2 { margin: 0 0 16px; }
+.wrap { display:grid; gap:16px; grid-template-columns: 1.2fr 1fr; }
+.card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+label { display:block; font-size:13px; color:#374151; margin:10px 0 6px; }
+input[type="text"], textarea, input[type="file"] { width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fcfcff; }
+textarea { min-height:84px; resize:vertical; }
+.row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.btn { appearance:none; border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
+.btn.primary { background:#111827; color:#fff; }
+.btn.ghost { background:#eef2ff; color:#1f2937; }
+.btn.warn { background:#fee2e2; color:#991b1b; }
+.btn.small { padding:6px 10px; border-radius:8px; font-size:13px; }
+.toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+table { width:100%; border-collapse:collapse; border-radius:12px; overflow:hidden; }
+th, td { padding:10px 12px; border-bottom:1px solid #f1f5f9; text-align:left; vertical-align:top; }
+th { background:#f8fafc; font-weight:600; font-size:13px; color:#475569; }
+tbody tr:hover { background:#fafafa; }
+.muted { color:#6b7280; font-size:12px; }
+.pill { display:inline-block; padding:2px 8px; background:#eef2ff; color:#4338ca; border-radius:9999px; font-size:12px; }
+.stack { display:flex; flex-direction:column; gap:6px; }
+.followups { border:1px dashed #e5e7eb; border-radius:12px; padding:10px; background:#fcfcff; }
+.fu-row { display:grid; grid-template-columns: 1fr 120px auto; gap:8px; align-items:center; }
+.code { background:#0b1020; color:#c7d2fe; border-radius:10px; padding:10px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }
+.sticky-top { position: sticky; top: 16px; }
+@media (max-width: 1100px) { .wrap { grid-template-columns: 1fr; } .sticky-top { position: static; } }
+</style>
+</head>
+<body>
+
+<h1>📣 Campaign Dashboard</h1>
+
+
+
+<div class="wrap">
+  <!-- Left: CSV Upload + Campaign List -->
+  <section class="card">
+    <h2>Upload Prospects CSV</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="file" id="csvFile" required/>
+      <button type="submit" class="btn primary">Upload CSV</button>
+    </form>
+    <p id="csvStatus" class="muted">(none)</p>
+
+    <h2>All Campaigns</h2>
+    <div class="toolbar" style="justify-content:flex-end; margin-bottom:10px;">
+      <button class="btn ghost" id="refreshBtn">⟳ Refresh</button>
+      <button class="btn ghost" id="clearViewBtn">Clear View</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          
+          <th>Bait</th>
+          <th>Main</th>
+          <th>Prospect Lists</th>
+          <th>Platform</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="campaignsTbody">
+        <tr><td colspan="6" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Right: Campaign Form + Logs -->
+  <section class="card sticky-top">
+    <div class="stack" style="gap:10px">
+      <div class="toolbar" style="justify-content:space-between;">
+        <strong id="formTitle">Create Campaign</strong>
+        <button class="btn ghost small" id="resetFormBtn">Reset</button>
+      </div>
+
+      <label for="platform">Platform</label>
+<select id="platform" required>
+  <option value="">-- Select Platform --</option>
+  <option value="facebook">Facebook</option>
+  <option value="whatsapp">WhatsApp</option>
+  <option value="email">Email</option>
+  <option value="sms">SMS</option>
+  <option value="instagram">Instagram</option>
+</select>
+
+      <form id="campaignForm" class="stack" onsubmit="return false;">
+        <input type="hidden" id="campaignId" />
+        <label for="name">Campaign Name</label>
+        <input type="text" id="name" placeholder="Summer Outreach 2025" required />
+
+        <div class="row">
+          <div>
+            <label for="baitContent">Bait Message</label>
+            <textarea id="baitContent" placeholder="Quick question about your growth goals…"></textarea>
+          </div>
+          <div>
+            <label for="mainContent">Main Message</label>
+            <textarea id="mainContent" placeholder="We help X achieve Y using Z…"></textarea>
+          </div>
+        </div>
+
+        <div class="followups stack">
+          <div class="toolbar" style="justify-content:space-between;">
+            <strong>Follow-ups</strong>
+            <button type="button" class="btn ghost small" id="addFollowUpBtn">+ Add follow-up</button>
+          </div>
+          <div id="followUpsWrap" class="stack"></div>
+          <div class="muted">Each follow-up has <code>content</code> and <code>delayAfterPrevious</code> in minutes.</div>
+        </div>
+
+        <label for="prospectLists">Prospect List IDs (comma-separated)</label>
+        <input type="text" id="prospectLists" placeholder="68a2be9fe95b0a2c2913a6c8, ...">
+
+        <div class="toolbar" style="justify-content:flex-end;">
+          <button class="btn primary" id="submitBtn">Create</button>
+        </div>
+      </form>
+
+      <div class="stack">
+        <strong>Selected / Response</strong>
+        <pre id="details" class="code" style="min-height:120px;">(none)</pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const API_BASE = "http://localhost:5000/api/campaigns";
+
+// ===== CSV Upload =====
+const uploadForm = document.getElementById("uploadForm");
+const csvStatus = document.getElementById("csvStatus");
+uploadForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const fileInput = document.getElementById("csvFile");
+  if (!fileInput.files[0]) return csvStatus.textContent = "Please select a CSV file.";
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  try {
+    const res = await fetch("http://localhost:5000/upload-csv/upload", { method:"POST", body:formData });
+    const data = await res.json();
+    csvStatus.textContent = "✅ Upload successful: " + JSON.stringify(data);
+  } catch(err) { csvStatus.textContent = "❌ Upload failed: " + err.message; }
+});
+
+// ===== Helpers =====
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, props = {}, children = []) => {
+  const n = document.createElement(tag);
+  Object.entries(props).forEach(([k,v]) => {
+    if (k==="class") n.className=v;
+    else if (k==="html") n.innerHTML=v;
+    else if (k.startsWith("on") && typeof v==="function") n.addEventListener(k.substring(2), v);
+    else n.setAttribute(k,v);
+  });
+  children.forEach(c => n.appendChild(typeof c==="string"?document.createTextNode(c):c));
+  return n;
+};
+const toast = (msg) => $("#details").textContent = msg;
+const pretty = (obj) => JSON.stringify(obj, null,2);
+
+// ===== Follow-ups =====
+const followUpsWrap = $("#followUpsWrap");
+function addFollowUpRow(data={content:"", delayAfterPrevious:""}) {
+  const row = el("div",{class:"fu-row"});
+  const content = el("input",{type:"text", placeholder:"Follow-up content", value:data.content});
+  const delay = el("input",{type:"text", placeholder:"Delay (minutes)", value:data.delayAfterPrevious});
+  const remove = el("button",{class:"btn warn small", type:"button"}, ["Remove"]);
+  remove.addEventListener("click",()=>row.remove());
+  row.append(content, delay, remove);
+  followUpsWrap.appendChild(row);
+}
+$("#addFollowUpBtn").addEventListener("click",()=>addFollowUpRow());
+function readFollowUps(){
+  return Array.from(followUpsWrap.querySelectorAll(".fu-row")).map(r=>{
+    const [cEl,dEl]=r.querySelectorAll("input");
+    const obj={content:cEl.value.trim()};
+    const raw=dEl.value.trim();
+    if(raw!==""){
+      const n=Number(raw);
+      if(!Number.isFinite(n)) throw new Error("delayAfterPrevious must be a number");
+      obj.delayAfterPrevious=n;
+    }
+    return obj;
+  }).filter(fu=>fu.content.length>0);
+}
+function setFollowUps(arr){followUpsWrap.innerHTML=""; arr.forEach(addFollowUpRow);}
+
+// ===== Form =====
+const formTitle = $("#formTitle");
+const idInput = $("#campaignId");
+const nameInput = $("#name");
+const baitInput = $("#baitContent");
+const mainInput = $("#mainContent");
+const plInput = $("#prospectLists");
+const submitBtn = $("#submitBtn");
+const platformInput = $("#platform");
+
+function resetForm(){
+  idInput.value=""; 
+  nameInput.value=""; 
+  platformInput.value="";   // reset platform
+  baitInput.value=""; 
+  mainInput.value=""; 
+  plInput.value="";
+  setFollowUps([]);
+  formTitle.textContent="Create Campaign"; 
+  submitBtn.textContent="Create";
+  toast("(none)");
+}
+$("#resetFormBtn").addEventListener("click", resetForm);
+function fillFormForEdit(c){
+  idInput.value=c._id; 
+  nameInput.value=c.name || "";
+  platformInput.value=c.platform || "";   // restore platform
+  baitInput.value=c.baitMessage?.content||"";
+  mainInput.value=c.mainMessage?.content||"";
+  plInput.value=(c.prospectLists||[])
+    .map(pl=>typeof pl==="string"?pl:(pl._id||""))
+    .filter(Boolean).join(", ");
+  setFollowUps(c.followUps||[]);
+  formTitle.textContent="Edit Campaign"; 
+  submitBtn.textContent="Update";
+  toast(pretty(c));
+}
+
+// Build payload
+function buildPayload(){
+  const name=nameInput.value.trim(), 
+        platform=platformInput.value.trim(),
+        bait=baitInput.value.trim(), 
+        main=mainInput.value.trim();
+
+  if(!name||!bait||!main||!platform) 
+    throw new Error("Name, platform, bait and main required");
+
+  const followUps=readFollowUps();
+  const prospectLists = plInput.value.trim()
+    .split(",").map(s=>s.trim()).filter(Boolean);
+
+  return {
+    name, 
+    platform, 
+    baitMessage:{content:bait}, 
+    mainMessage:{content:main}, 
+    followUps, 
+    prospectLists
+  };
+}
+
+
+// ===== API =====
+async function api(method,path="",body){
+  const res = await fetch(`${API_BASE}${path}`,{
+    method, headers:{'Content-Type':'application/json'}, body:body?JSON.stringify(body):undefined
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return res.json().catch(()=>({}));
+}
+
+// Load campaigns
+async function loadCampaigns(){
+  $("#campaignsTbody").innerHTML=`<tr><td colspan="5" class="muted">Loading…</td></tr>`;
+  try{
+    const data=await api("GET","/");
+    renderCampaigns(data||[]);
+  }catch(e){ $("#campaignsTbody").innerHTML=`<tr><td colspan="5" class="muted">Failed: ${e.message}</td></tr>`;}
+}
+function renderCampaigns(items){
+  const tbody=$("#campaignsTbody");
+  tbody.innerHTML="";
+  if(!items.length){ tbody.innerHTML=`<tr><td colspan="5" class="muted">No campaigns yet.</td></tr>`; return; }
+  items.forEach(c=>{
+    const tr=el("tr");
+    const lists=(c.prospectLists||[]).map(pl=>typeof pl==="string"?pl:(pl._id||"")).map(id=>`<span class="pill">${id.slice(0,6)}…</span>`).join(" ");
+    tr.appendChild(el("td",{},[c.name||"—"]));
+    tr.appendChild(el("td",{class:"muted"},[c.baitMessage?.content||"—"]));
+    tr.appendChild(el("td",{class:"muted"},[c.mainMessage?.content||"—"]));
+    tr.appendChild(el("td",{html:lists||"<span class='muted'>None</span>"}));
+    tr.appendChild(el("td",{},[c.platform || "—"]));
+
+    const actions=el("td");
+    const viewBtn=el("button",{class:"btn ghost small",type:"button"},["View"]);
+    const editBtn=el("button",{class:"btn ghost small",type:"button"},["Edit"]);
+    const delBtn=el("button",{class:"btn warn small",type:"button"},["Delete"]);
+    const runBtn=el("button",{class:"btn primary small",type:"button"},["Run"]);
+    viewBtn.addEventListener("click",async()=>{ try{ const data=await api("GET",`/${c._id}`); toast(pretty(data));}catch(e){toast("View failed: "+e.message);} });
+    editBtn.addEventListener("click",()=>fillFormForEdit(c));
+    delBtn.addEventListener("click",async()=>{ if(!confirm(`Delete "${c.name}"?`)) return; try{await api("DELETE",`/${c._id}`); toast("Deleted."); await loadCampaigns(); }catch(e){toast("Delete failed: "+e.message);} });
+    
+    runBtn.addEventListener("click", async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/run-campaign/${c._id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    }).then(r => {
+      if (!r.ok) return r.text().then(t => { throw new Error(t); });
+      return r.json().catch(() => ({}));
+    });
+
+    toast("✅ Campaign started: " + pretty(res));
+  } catch (e) {
+    toast("Run failed: " + e.message);
+  }
+});
+
+    actions.append(viewBtn," ",editBtn," ",delBtn," ",runBtn);
+    tr.appendChild(actions); tbody.appendChild(tr);
+  });
+}
+
+// Submit form
+submitBtn.addEventListener("click",async()=>{
+  try{
+    const payload=buildPayload(); const id=idInput.value.trim();
+    if(id) toast(pretty(await api("PUT",`/${id}`,payload)));
+    else toast(pretty(await api("POST","/",payload)));
+    await loadCampaigns(); if(!id) resetForm();
+  }catch(e){ toast("Submit failed: "+e.message); }
+});
+
+// Refresh + Clear
+$("#refreshBtn").addEventListener("click", loadCampaigns);
+$("#clearViewBtn").addEventListener("click",()=>toast("(none)"));
+
+// Initial state
+resetForm();
+addFollowUpRow();
+loadCampaigns();
+</script>
+
+</body>
+</html>
