@@ -53,7 +53,7 @@ mongoose.connection.on("disconnected", () => logTime("⚠️ Mongoose disconnect
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
@@ -93,9 +93,10 @@ async function startServer() {
     initializeProcessors();
 
     // Start server
-    app.listen(5000, () => {
-      logTime("🚀 Server running on http://localhost:5000");
-    });
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+  logTime(`🚀 Server running on port ${PORT}`);
+});
   } catch (err) {
     console.error(`[${new Date().toISOString()}] ❌ MongoDB connection error:`, err.message);
   }
