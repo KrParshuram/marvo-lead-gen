@@ -24,7 +24,7 @@ import whatsappWebhook from "./whatsapp/webhookHandler.js";
 import instaWebhook from "./insta/webhookHandler.js";
 
 // Queues & processors
-import { initializeQueues } from "./queues.js";
+// import { initializeQueues } from "./queues.js";
 import { initializeProcessors } from "./processors.js";
 
 dotenv.config();
@@ -87,8 +87,8 @@ async function startServer() {
     logTime("✅ MongoDB Connected");
 
     // Initialize queues and processors AFTER DB connection
-    logTime("Initializing queues...");
-    initializeQueues();
+    // logTime("Initializing queues...");
+    // initializeQueues();
     logTime("Initializing processors...");
     initializeProcessors();
 
