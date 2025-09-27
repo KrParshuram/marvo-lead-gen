@@ -18,10 +18,12 @@ export function initializeProcessors() {
 
       try {
         const { prospectDetailId } = job.data;
-        const pd = await ProspectDetailed.findById(prospectDetailId);
+        if (!prospectDetailId) throw new Error("Missing prospectDetailId");
+
+        const pd = await ProspectDetailed.findById(prospectDetailId.toString());
         if (!pd) return console.warn(`❌ ProspectDetailed not found: ${prospectDetailId}`);
 
-        const campaign = await Campaign.findById(pd.campaign);
+        const campaign = await Campaign.findById(pd.campaign.toString());
         if (!campaign) return console.warn(`❌ Campaign not found for prospect: ${pd._id}`);
 
         if (pd.baitSent) return console.log(`⏩ Bait already sent for ${pd._id}`);
@@ -50,10 +52,12 @@ export function initializeProcessors() {
 
       try {
         const { prospectDetailId } = job.data;
-        const pd = await ProspectDetailed.findById(prospectDetailId);
+        if (!prospectDetailId) throw new Error("Missing prospectDetailId");
+
+        const pd = await ProspectDetailed.findById(prospectDetailId.toString());
         if (!pd) return console.warn(`❌ Prospect not found: ${prospectDetailId}`);
 
-        const campaign = await Campaign.findById(pd.campaign);
+        const campaign = await Campaign.findById(pd.campaign.toString());
         if (!campaign) return console.warn(`❌ Campaign not found for ${pd._id}`);
 
         if (!pd.repliedAfterBait) return console.log(`⏩ Skipping Main — no reply after Bait for ${pd._id}`);
@@ -67,12 +71,14 @@ export function initializeProcessors() {
           console.log(`📤 Main sent for ${pd._id}`);
 
           // Queue first follow-up if exists
-          if (campaign.followUps.length > 0) {
+          if (Array.isArray(campaign.followUps) && campaign.followUps.length > 0) {
             const firstFollowUp = campaign.followUps[0];
-            console.log(`⏳ Queuing follow-up(0) for ${pd._id} after ${firstFollowUp.delayAfterPrevious} min`);
+            const delayMs = Number(firstFollowUp.delayAfterPrevious) * 60 * 1000 || 0;
+
+            console.log(`⏳ Queuing follow-up(0) for ${pd._id} after ${delayMs / 60000} min`);
             await followUpQueue.add(
-              { prospectDetailId: pd._id, followUpIndex: 0 },
-              { delay: firstFollowUp.delayAfterPrevious * 60 * 1000 }
+              { prospectDetailId: pd._id.toString(), followUpIndex: 0 },
+              { delay: delayMs }
             );
           }
         }
@@ -93,34 +99,39 @@ export function initializeProcessors() {
 
       try {
         const { prospectDetailId, followUpIndex } = job.data;
-        const pd = await ProspectDetailed.findById(prospectDetailId);
+        if (!prospectDetailId) throw new Error("Missing prospectDetailId");
+        const index = Number(followUpIndex || 0);
+
+        const pd = await ProspectDetailed.findById(prospectDetailId.toString());
         if (!pd) return console.warn(`❌ Prospect not found: ${prospectDetailId}`);
 
         if (!pd.mainSent || pd.repliedAfterMain) {
           return console.log(`⏩ Skipping follow-up — Main not sent or replied. ${pd._id}`);
         }
 
-        const campaign = await Campaign.findById(pd.campaign);
+        const campaign = await Campaign.findById(pd.campaign.toString());
         if (!campaign) return console.warn(`❌ Campaign not found for ${pd._id}`);
 
-        if (followUpIndex >= campaign.followUps.length) return console.log(`✅ All follow-ups completed for ${pd._id}`);
+        if (index >= campaign.followUps.length) return console.log(`✅ All follow-ups completed for ${pd._id}`);
 
-        const followUp = campaign.followUps[followUpIndex];
+        const followUp = campaign.followUps[index];
         const sent = await sendMessageByPlatform(pd, followUp.content);
 
         if (sent) {
-          pd.followUpSent = followUpIndex + 1;
+          pd.followUpSent = index + 1;
           pd.lastMessageSentAt = new Date();
           await pd.save();
-          console.log(`📤 Follow-up(${followUpIndex}) sent for ${pd._id}`);
+          console.log(`📤 Follow-up(${index}) sent for ${pd._id}`);
 
           // Queue next follow-up if exists
           if (pd.followUpSent < campaign.followUps.length) {
             const nextFollowUp = campaign.followUps[pd.followUpSent];
-            console.log(`⏳ Queuing follow-up(${pd.followUpSent}) after ${nextFollowUp.delayAfterPrevious} min`);
+            const delayMs = Number(nextFollowUp.delayAfterPrevious) * 60 * 1000 || 0;
+
+            console.log(`⏳ Queuing follow-up(${pd.followUpSent}) after ${delayMs / 60000} min`);
             await followUpQueue.add(
-              { prospectDetailId: pd._id, followUpIndex: pd.followUpSent },
-              { delay: nextFollowUp.delayAfterPrevious * 60 * 1000 }
+              { prospectDetailId: pd._id.toString(), followUpIndex: pd.followUpSent },
+              { delay: delayMs }
             );
           }
         }
@@ -145,7 +156,7 @@ export function initializeProcessors() {
 
       for (const pd of pendingMain) {
         console.log(`⏳ Queuing Main for ${pd._id} (reply detected)`);
-        await mainQueue.add({ prospectDetailId: pd._id });
+        await mainQueue.add({ prospectDetailId: pd._id.toString() });
       }
     } catch (err) {
       console.error("❌ Error in periodic main check:", err);
