@@ -4,6 +4,7 @@ import ProspectDetailed from '../../models/prospectDetailedSchema.js';
 import Config from '../../models/Config.js';
 import { getQueues } from '../../queues.js'; // adjust path
 
+
 const router = Router();
 
 /**

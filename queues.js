@@ -1,34 +1,28 @@
-import Queue from "bull";
-import dotenv from "dotenv";
-dotenv.config();
-let queues;
+// queues.js
+import { Queue, QueueScheduler, QueueEvents } from "bullmq";
+import IORedis from "ioredis";
 
-export function initializeQueues() {
-  if (!queues) {
-    if (!process.env.REDIS_URL) {
-      throw new Error("❌ REDIS_URL not set in environment variables");
-    }
+const connection = new IORedis(process.env.REDIS_URL);
 
-    const redisConfig = {
-      redis: {
-        url: process.env.REDIS_URL,
-        db: 0, // 👈 explicitly set to avoid NaN
-        tls: process.env.REDIS_URL.startsWith("rediss://") ? {} : undefined,
-      },
-    };
+const baitQueue = new Queue("bait", { connection });
+new QueueScheduler("bait", { connection });
 
-    queues = {
-      baitQueue: new Queue("bait_queue", redisConfig),
-      mainQueue: new Queue("main_queue", redisConfig),
-      followUpQueue: new Queue("followup_queue", redisConfig),
-    };
+const mainQueue = new Queue("main", { connection });
+new QueueScheduler("main", { connection });
 
-    console.log("✅ Queues initialized with Redis Cloud");
-  }
-  return queues;
-}
+const followUpQueue = new Queue("followUp", { connection });
+new QueueScheduler("followUp", { connection });
+
+// optional logging for failures
+[new QueueEvents("bait", { connection }),
+ new QueueEvents("main", { connection }),
+ new QueueEvents("followUp", { connection })]
+.forEach(events => {
+  events.on("failed", (job, err) => {
+    console.error(`❌ [${events.name}] Job ${job.jobId} failed:`, err);
+  });
+});
 
 export function getQueues() {
-  if (!queues) throw new Error("Queues not initialized yet!");
-  return queues;
+  return { baitQueue, mainQueue, followUpQueue };
 }
