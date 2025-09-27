@@ -1,5 +1,5 @@
-// queues.js
-import { Queue, QueueScheduler, QueueEvents } from "bullmq";
+import pkg from "bullmq";
+const { Queue, QueueScheduler, QueueEvents } = pkg;
 import IORedis from "ioredis";
 
 const connection = new IORedis(process.env.REDIS_URL);
