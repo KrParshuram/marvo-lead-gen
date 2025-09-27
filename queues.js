@@ -1,5 +1,11 @@
 import * as bullmq from "bullmq";
 import IORedis from "ioredis";
+import bullmqPkg from "bullmq/package.json" assert { type: "json" };
+import ioredisPkg from "ioredis/package.json" assert { type: "json" };
+
+// ✅ Print versions at startup (will show in Render logs)
+console.log("🚀 BullMQ version:", bullmqPkg.version);
+console.log("🚀 ioredis version:", ioredisPkg.version);
 
 const { Queue, QueueScheduler, QueueEvents } = bullmq;
 
@@ -15,10 +21,11 @@ const followUpQueue = new Queue("followUp", { connection });
 new QueueScheduler("followUp", { connection });
 
 // optional logging for failures
-;[new QueueEvents("bait", { connection }),
+;[
+  new QueueEvents("bait", { connection }),
   new QueueEvents("main", { connection }),
-  new QueueEvents("followUp", { connection })]
-.forEach(events => {
+  new QueueEvents("followUp", { connection })
+].forEach(events => {
   events.on("failed", (job, err) => {
     console.error(`❌ [${events.name}] Job ${job.jobId} failed:`, err);
   });
