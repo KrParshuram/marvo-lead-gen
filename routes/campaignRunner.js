@@ -73,7 +73,7 @@ router.post("/run-campaign/:campaignId", async (req, res) => {
     // 6️⃣ Enqueue jobs with real IDs
     const { baitQueue } = getQueues();
     insertedRecords.forEach(pd => {
-      baitQueue.add({ prospectDetailId: pd._id });
+      baitQueue.add({ prospectDetailId: pd._id.toString() });
       console.log(`Queued bait message for prospect ${pd.prospect} on ${pd.platform}`);
     });
 
