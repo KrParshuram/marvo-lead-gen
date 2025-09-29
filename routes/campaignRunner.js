@@ -3,6 +3,7 @@ import Campaign from "../models/Campaign.js";
 import Prospect from "../models/Prospect.js";
 import ProspectDetailed from "../models/prospectDetailedSchema.js";
 import { getQueues } from "../queues.js";
+import { safeAdd } from "../queueHelpers.js"; 
 
 const router = express.Router();
 
@@ -71,11 +72,28 @@ router.post("/run-campaign/:campaignId", async (req, res) => {
     }
 
     // 6️⃣ Enqueue jobs with real IDs
-    const { baitQueue } = getQueues();
-    insertedRecords.forEach(pd => {
-      baitQueue.add({ prospectDetailId: pd._id.toString() });
+    // const { baitQueue } = getQueues();
+    // insertedRecords.forEach(pd => {
+    //   baitQueue.add({ prospectDetailId: pd._id.toString() });
+    //   console.log(`Queued bait message for prospect ${pd.prospect} on ${pd.platform}`);
+    // });
+
+        const { baitQueue } = getQueues();
+    for (const pd of insertedRecords) {
+      // create an explicit sanitized payload (only primitives/strings)
+      const payload = {
+        prospectDetailId: pd._id.toString(),
+        // prospectId: pd.prospect?.toString?.() ?? null,
+        // campaignId: pd.campaign?.toString?.() ?? null,
+        // platform: String(pd.platform || ""),
+        // platformId: String(pd.platformId || ""),
+      };
+
+      // safeAdd will sanitize again and enforce numeric opts
+      await safeAdd(baitQueue, payload);
       console.log(`Queued bait message for prospect ${pd.prospect} on ${pd.platform}`);
-    });
+    }
+
 
     res.send({ success: true, message: "Campaign started and bait messages queued." });
   } catch (err) {

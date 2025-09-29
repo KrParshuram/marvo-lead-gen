@@ -4,6 +4,7 @@ import ProspectDetailed from "./models/prospectDetailedSchema.js";
 import Campaign from "./models/Campaign.js";
 import { getQueues } from "./queues.js";
 import { sendMessageByPlatform } from "./service/messageService.js";
+import { safeAdd } from "./queueHelpers.js";
 
 export function initializeProcessors() {
   const { baitQueue, mainQueue, followUpQueue } = getQueues();
@@ -76,10 +77,16 @@ export function initializeProcessors() {
             const delayMs = Number(firstFollowUp.delayAfterPrevious) * 60 * 1000 || 0;
 
             console.log(`⏳ Queuing follow-up(0) for ${pd._id} after ${delayMs / 60000} min`);
-            await followUpQueue.add(
-              { prospectDetailId: pd._id.toString(), followUpIndex: 0 },
-              { delay: delayMs }
-            );
+            // await followUpQueue.add(
+            //   { prospectDetailId: pd._id.toString(), followUpIndex: 0 },
+            //   { delay: delayMs }
+            // );
+
+              await safeAdd(followUpQueue, {
+              prospectDetailId: pd._id.toString(),
+              followUpIndex: 0,
+              campaignId: pd.campaign?.toString?.() ?? null
+            }, { delay: delayMs });
           }
         }
       } catch (err) {
@@ -129,10 +136,15 @@ export function initializeProcessors() {
             const delayMs = Number(nextFollowUp.delayAfterPrevious) * 60 * 1000 || 0;
 
             console.log(`⏳ Queuing follow-up(${pd.followUpSent}) after ${delayMs / 60000} min`);
-            await followUpQueue.add(
-              { prospectDetailId: pd._id.toString(), followUpIndex: pd.followUpSent },
-              { delay: delayMs }
-            );
+            // await followUpQueue.add(
+            //   { prospectDetailId: pd._id.toString(), followUpIndex: pd.followUpSent },
+            //   { delay: delayMs }
+            // );
+            await safeAdd(followUpQueue, {
+                prospectDetailId: pd._id.toString(),
+                followUpIndex: 0,
+                campaignId: pd.campaign?.toString?.() ?? null
+              }, { delay: delayMs });
           }
         }
       } catch (err) {
@@ -156,7 +168,8 @@ export function initializeProcessors() {
 
       for (const pd of pendingMain) {
         console.log(`⏳ Queuing Main for ${pd._id} (reply detected)`);
-        await mainQueue.add({ prospectDetailId: pd._id.toString() });
+        // await mainQueue.add({ prospectDetailId: pd._id.toString() });
+        await safeAdd(mainQueue, { prospectDetailId: pd._id.toString() });
       }
     } catch (err) {
       console.error("❌ Error in periodic main check:", err);

@@ -83,8 +83,8 @@ router.post('/webhook', async (req, res) => {
             // Queue main message if needed
             if (prospectDetail.repliedAfterBait && !prospectDetail.mainSent) {
               const { mainQueue } = getQueues();
-              console.log(`⏳ Queuing Main message for ${prospectDetail._id}`);
-              await mainQueue.add({ prospectDetailId: prospectDetail._id });
+              // console.log(`⏳ Queuing Main message for ${prospectDetail._id}`);
+              // await mainQueue.add({ prospectDetailId: prospectDetail._id });
             }
           } else {
             console.warn(`⚠️ No ProspectDetailed found for senderId: ${senderId}`);

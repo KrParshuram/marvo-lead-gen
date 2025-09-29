@@ -15,7 +15,7 @@ router.post("/reply-bait", async (req, res) => {
   await pd.save();
 
   // Enqueue main message
-  await mainQueue.add({ prospectDetail: pd });
+  // await mainQueue.add({ prospectDetail: pd });
 
   res.send({ success: true });
 });
