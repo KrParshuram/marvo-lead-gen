@@ -78,7 +78,7 @@ router.post("/run-campaign/:campaignId", async (req, res) => {
     //   console.log(`Queued bait message for prospect ${pd.prospect} on ${pd.platform}`);
     // });
 
-        const { baitQueue } = getQueues();
+    const { baitQueue } = getQueues();
     for (const pd of insertedRecords) {
       // create an explicit sanitized payload (only primitives/strings)
       const payload = {

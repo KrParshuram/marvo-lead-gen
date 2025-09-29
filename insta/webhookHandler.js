@@ -65,13 +65,13 @@ router.post("/webhook", async (req, res) => {
             console.log(`Updated ProspectDetailed ${prospectDetail._id} with IG reply: "${messageText}"`);
 
             // Queue Main if replied after bait
-            if (prospectDetail.repliedAfterBait && !prospectDetail.mainSent) {
-              const { mainQueue } = getQueues();
-              if (mainQueue) {
-                console.log(`⏳ Queuing Main message for ${prospectDetail._id}`);
-                await mainQueue.add({ prospectDetailId: prospectDetail._id });
-              }
-            }
+            // if (prospectDetail.repliedAfterBait && !prospectDetail.mainSent) {
+            //   const { mainQueue } = getQueues();
+            //   if (mainQueue) {
+            //     console.log(`⏳ Queuing Main message for ${prospectDetail._id}`);
+            //     await mainQueue.add({ prospectDetailId: prospectDetail._id });
+            //   }
+            // }
 
           } else {
             console.warn(`⚠️ No ProspectDetailed found for IG senderId: ${senderId}`);

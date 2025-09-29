@@ -67,13 +67,12 @@ function safeNumber(n, fallback = 0) {
 export async function safeAdd(queue, data = {}, opts = {}) {
   const safeData = sanitizeJobData(data);
 
-  // ensure opts numeric fields are finite
+  // normalize numeric opts
   const safeOpts = { ...opts };
   if ("delay" in safeOpts) safeOpts.delay = safeNumber(safeOpts.delay, 0);
   if ("attempts" in safeOpts) safeOpts.attempts = safeNumber(safeOpts.attempts, 0);
-  // add more normalization if you use other options
 
-  // quick JSON-serialize test (will throw if something still not serializable)
+  // check JSON-serializability
   try {
     JSON.stringify(safeData);
   } catch (err) {
@@ -82,10 +81,15 @@ export async function safeAdd(queue, data = {}, opts = {}) {
   }
 
   try {
-    // Use the same signature you've been using (Queue.add(data, opts))
-    return await queue.add(safeData, safeOpts);
+    // ✅ Always pass a string job name
+    return await queue.add("default", safeData, safeOpts);
   } catch (err) {
-    console.error("❌ safeAdd: failed to add job", { queueName: queue.name ?? queue?.opts?.name, safeData, safeOpts, err });
+    console.error("❌ safeAdd: failed to add job", {
+      queueName: queue.name ?? queue?.opts?.name,
+      safeData,
+      safeOpts,
+      err,
+    });
     throw err;
   }
 }
