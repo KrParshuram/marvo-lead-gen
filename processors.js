@@ -142,7 +142,7 @@ export function initializeProcessors() {
             // );
             await safeAdd(followUpQueue, {
                 prospectDetailId: pd._id.toString(),
-                followUpIndex: 0,
+                followUpIndex: pd.followUpSent,
                 campaignId: pd.campaign?.toString?.() ?? null
               }, { delay: delayMs });
           }

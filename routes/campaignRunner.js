@@ -28,7 +28,7 @@ router.post("/run-campaign/:campaignId", async (req, res) => {
         case "sms": return p.sms;
         case "whatsapp": return p.wtsp;
         case "email": return p.mail;
-        case "insta": return p.insta;
+        case "instagram": return p.insta;
         default: return false;
       }
     });

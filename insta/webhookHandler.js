@@ -51,10 +51,11 @@ router.post("/webhook", async (req, res) => {
               console.log(`✅ Prospect ${prospectDetail._id} replied after Bait`);
             } else if (!prospectDetail.repliedAfterMain) {
               prospectDetail.repliedAfterMain = true;
+              prospectDetail.status = 'interested';
               console.log(`✅ Prospect ${prospectDetail._id} replied after Main`);
             }
 
-            prospectDetail.status = 'interested';
+            
             prospectDetail.lastReply = {
               platform: 'instagram',
               message: messageText,
