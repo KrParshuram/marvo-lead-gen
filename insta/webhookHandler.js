@@ -46,7 +46,7 @@ router.post("/webhook", async (req, res) => {
         const senderId = event.sender?.id;
         const messageText = event.message.text;
 
-        if (!senderId) continue;
+        if (!messageText) continue;
 
         try {
           // Find ProspectDetailed by platform + platformId
