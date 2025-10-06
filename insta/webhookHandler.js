@@ -34,17 +34,14 @@ router.post("/webhook", async (req, res) => {
   try {
     const entry = req.body.entry || [];
     for (const e of entry) {
-      const messaging = e.messaging || [];
       for (const event of messaging) {
+  // Only process real text messages
+          if (!event.message || !event.message.text) continue;
 
-        // Only process real text messages
-        // if (!event.message || !event.message.text) {
-        //   // skip delivery, read, edit events
-        //   continue;
-        // }
+          const senderId = event.sender?.id;
+          const messageText = event.message.text;
 
-        const senderId = event.sender?.id;
-        const messageText = event.message.text;
+          if (!senderId) continue;
 
         // if (!messageText) continue;
 
