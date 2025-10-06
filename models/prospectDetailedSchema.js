@@ -13,7 +13,7 @@ const prospectDetailedSchema = new mongoose.Schema({
   },
   platform: {
     type: String,
-    enum: ["sms", "facebook", "whatsapp", "email", "insta"],
+    enum: ["sms", "facebook", "whatsapp", "email", "instagram"],
     required: true
   },
   platformId: { // number, fb psid, email etc
