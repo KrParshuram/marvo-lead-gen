@@ -50,7 +50,7 @@ router.post("/run-campaign/:campaignId", async (req, res) => {
 
     uniqueProspects.forEach(p => {
       if (!existingProspects.has(p._id.toString())) {
-        const platformMap = { facebook: "fb", sms: "sms", whatsapp: "wtsp", email: "mail", insta: "insta" };
+        const platformMap = { facebook: "fb", sms: "sms", whatsapp: "wtsp", email: "mail", instagram: "insta" };
         const platformId = p[platformMap[campaignPlatform]];
         if (platformId) {
           newProspectDetails.push({
