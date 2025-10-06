@@ -113,6 +113,7 @@ export function initializeProcessors() {
         if (!pd) return console.warn(`❌ Prospect not found: ${prospectDetailId}`);
 
         if (!pd.mainSent || pd.repliedAfterMain) {
+          console.log(`Follow-up check: mainSent=${pd.mainSent}, repliedAfterMain=${pd.repliedAfterMain}`)
           return console.log(`⏩ Skipping follow-up — Main not sent or replied. ${pd._id}`);
         }
 
@@ -176,3 +177,35 @@ export function initializeProcessors() {
     }
   }, 30 * 1000);
 }
+
+// ==========================
+// SMS Reply Simulator (for testing)
+// ==========================
+setInterval(async () => {
+  try {
+    const now = new Date();
+
+    const pendingSMS = await ProspectDetailed.find({
+      platform: "sms",
+      baitSent: true,
+      repliedAfterBait: false,
+      mainSent: false
+    });
+
+    for (const pd of pendingSMS) {
+      pd.repliedAfterBait = true;
+      pd.status = "interested";
+      pd.lastReply = {
+        platform: "sms",
+        message: "Simulated reply",
+        timestamp: now
+      };
+
+      await pd.save();
+      // console.log(`⏳ Simulated SMS reply for ${pd._id}, queuing Main message`);
+      // await safeAdd(mainQueue, { prospectDetailId: pd._id.toString() });
+    }
+  } catch (err) {
+    console.error("❌ Error in SMS reply simulation:", err);
+  }
+}, 30 * 1000); // every 30 seconds

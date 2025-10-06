@@ -36,13 +36,21 @@ router.post("/webhook", async (req, res) => {
     for (const e of entry) {
       const messaging = e.messaging || [];
       for (const event of messaging) {
-        const senderId = event?.sender?.id;
-        const messageText = event?.message?.text || '';
+
+        // Only process real text messages
+        if (!event.message || !event.message.text) {
+          // skip delivery, read, edit events
+          continue;
+        }
+
+        const senderId = event.sender?.id;
+        const messageText = event.message.text;
+
         if (!senderId) continue;
 
         try {
           // Find ProspectDetailed by platform + platformId
-          const prospectDetail = await ProspectDetailed.findOne({ platform: 'instagram', platformId: senderId });
+          const prospectDetail = await ProspectDetailed.findOne({ platform: 'instagram' });
 
           if (prospectDetail) {
             // Determine reply type
