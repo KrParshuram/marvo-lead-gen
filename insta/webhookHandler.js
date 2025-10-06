@@ -37,12 +37,12 @@ router.post("/webhook", async (req, res) => {
   const events = e.messaging || [];
   for (const event of events) {
     // Only process real text messages
-    if (!event.message || !event.message.text) continue;
+    // if (!event.message || !event.message.text) continue;
 
     const senderId = event.sender?.id;
     const messageText = event.message.text;
 
-    if (!senderId) continue;
+    // if (!senderId) continue;
 
         try {
           // Find ProspectDetailed by platform + platformId
