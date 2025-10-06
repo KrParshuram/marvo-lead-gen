@@ -55,7 +55,7 @@ router.post("/webhook", async (req, res) => {
               console.log(`✅ Prospect ${prospectDetail._id} replied after Bait`);
             } 
             
-            if (!messageText) continue;
+            // if (!messageText) continue;
             // if (!prospectDetail.repliedAfterMain) {
             //   prospectDetail.repliedAfterMain = true;
             //   prospectDetail.status = 'interested';
