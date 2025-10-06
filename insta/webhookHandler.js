@@ -40,7 +40,7 @@ router.post("/webhook", async (req, res) => {
     // if (!event.message || !event.message.text) continue;
 
     const senderId = event.sender?.id;
-    const messageText = event.message.text;
+    const messageText = event.message?.text;
 
     // if (!senderId) continue;
 
