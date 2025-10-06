@@ -34,16 +34,15 @@ router.post("/webhook", async (req, res) => {
   try {
     const entry = req.body.entry || [];
     for (const e of entry) {
-      for (const event of messaging) {
-  // Only process real text messages
-          if (!event.message || !event.message.text) continue;
+  const events = e.messaging || [];
+  for (const event of events) {
+    // Only process real text messages
+    if (!event.message || !event.message.text) continue;
 
-          const senderId = event.sender?.id;
-          const messageText = event.message.text;
+    const senderId = event.sender?.id;
+    const messageText = event.message.text;
 
-          if (!senderId) continue;
-
-        // if (!messageText) continue;
+    if (!senderId) continue;
 
         try {
           // Find ProspectDetailed by platform + platformId
@@ -57,11 +56,11 @@ router.post("/webhook", async (req, res) => {
             } 
             
             if (!messageText) continue;
-            if (!prospectDetail.repliedAfterMain) {
-              prospectDetail.repliedAfterMain = true;
-              prospectDetail.status = 'interested';
-              console.log(`✅ Prospect ${prospectDetail._id} replied after Main`);
-            }
+            // if (!prospectDetail.repliedAfterMain) {
+            //   prospectDetail.repliedAfterMain = true;
+            //   prospectDetail.status = 'interested';
+            //   console.log(`✅ Prospect ${prospectDetail._id} replied after Main`);
+            // }
 
             
             // prospectDetail.lastReply = {
