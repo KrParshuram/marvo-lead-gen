@@ -38,15 +38,15 @@ router.post("/webhook", async (req, res) => {
       for (const event of messaging) {
 
         // Only process real text messages
-        if (!event.message || !event.message.text) {
-          // skip delivery, read, edit events
-          continue;
-        }
+        // if (!event.message || !event.message.text) {
+        //   // skip delivery, read, edit events
+        //   continue;
+        // }
 
         const senderId = event.sender?.id;
         const messageText = event.message.text;
 
-        if (!messageText) continue;
+        // if (!messageText) continue;
 
         try {
           // Find ProspectDetailed by platform + platformId
@@ -57,18 +57,21 @@ router.post("/webhook", async (req, res) => {
             if (!prospectDetail.repliedAfterBait) {
               prospectDetail.repliedAfterBait = true;
               console.log(`✅ Prospect ${prospectDetail._id} replied after Bait`);
-            } else if (!prospectDetail.repliedAfterMain) {
+            } 
+            
+            if (!messageText) continue;
+            if (!prospectDetail.repliedAfterMain) {
               prospectDetail.repliedAfterMain = true;
               prospectDetail.status = 'interested';
               console.log(`✅ Prospect ${prospectDetail._id} replied after Main`);
             }
 
             
-            prospectDetail.lastReply = {
-              platform: 'instagram',
-              message: messageText,
-              timestamp: new Date()
-            };
+            // prospectDetail.lastReply = {
+            //   platform: 'instagram',
+            //   message: messageText,
+            //   timestamp: new Date()
+            // };
 
             await prospectDetail.save();
             console.log(`Updated ProspectDetailed ${prospectDetail._id} with IG reply: "${messageText}"`);
